@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>异步并发队列</title>
+  </head>
+  <body>
+    <button id="add">添加一个任务</button>
+    <button id="pause">暂停</button>
+    <button id="continue">继续</button>
+  </body>
+
+  <script src="./index.js"></script>
+
+  <script>
+    let i = 0;
+
+    const createTask = (n) => {
+      return () => {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            console.log("正在执行：" + n);
+            if (n === 10) reject("失败了");
+            resolve(n);
+          }, 1000);
+        });
+      };
+    };
+
+    const taskQueue = new TaskQueue({ maxConcurency: 2 });
+
+    document.querySelector("#add").addEventListener("click", () => {
+      const newTask = createTask(i++);
+      taskQueue.add(newTask);
+    });
+
+    document.querySelector("#pause").addEventListener("click", () => {
+      taskQueue.pause();
+    });
+
+    document.querySelector("#continue").addEventListener("click", () => {
+      taskQueue.continue();
+    });
+  </script>
+</html>
