@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>简易immer思路</title>
+  </head>
+  <body></body>
+  <script src="./index.js"></script>
+
+  <script>
+    const obj = {
+      a: {
+        b: {
+          c: "c",
+        },
+      },
+      d: "d",
+      e: {
+        f: {
+          g: "g",
+          h: "h",
+        },
+      },
+      i: {
+        j: "j",
+        k: [1, 2, 3, { m: "m" }],
+      },
+    };
+
+    const res = produce(obj, (draft) => {
+      draft.e.f.g = "g1g1g1";
+      draft.i.k.push("xxx");
+    });
+
+    console.log(obj.a === res.a); // true
+    console.log(obj.e === res.e); // false
+    console.log(obj.i === res.i); // false
+    console.log(obj.i.k === res.i.k); // false
+    console.log(obj.i.k[3] === res.i.k[3]); // true
+  </script>
+</html>
