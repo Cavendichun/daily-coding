@@ -191,16 +191,138 @@ class _Promise {
 
     return nextPromise;
   }
+
+  // ES6的catch方法
+  catch(onRejected) {
+    return this.then(null, onRejected);
+  }
+
+  /**
+   * ES6的finally方法
+   * callback不接受参数
+   * 并且finall会把值穿透到下一层
+   */
+  finally(callback) {
+    return this.then(
+      (result) => {
+        callback();
+        return result;
+      },
+      (reason) => {
+        callback();
+        return reason;
+      }
+    );
+  }
+
+  /**
+   * 静态方法_Promise.resolve
+   * 传入的值有三种情况
+   * 1. 是当前类的实例
+   * 2. 符合promiseA+标准的thenable对象
+   * 3. 普通值
+   */
+  static resolve(value) {
+    // 如果是当前类的实例，需要直接返回，mdn文档有提到，需要保证 p2 === p1
+    if (value instanceof _Promise) {
+      return value;
+    }
+    // 如果是一个thenable
+    if (
+      (typeof value === "object" || typeof value === "function") &&
+      value !== null
+    ) {
+      // 如果then是函数的话
+      const then = value.then;
+      if (typeof then === "function") {
+        return new _Promise((resolve, reject) => {
+          then.call(value, resolve, reject);
+        });
+      }
+    }
+    // 其他情况
+    return new _Promise((resolve) => {
+      resolve(value);
+    });
+  }
+
+  // 静态方法
+  static reject(value) {
+    return new _Promise((_, reject) => {
+      reject(value);
+    });
+  }
+
+  // 静态方法
+  static all(target) {
+    return new _Promise((resolve, reject) => {
+      let restNum = 0;
+      const results = [];
+
+      for (const item of target) {
+        const index = restNum++;
+        _Promise.resolve(item).then((res) => {
+          results[index] = res;
+          restNum--;
+          if (!restNum) {
+            resolve(results);
+          }
+        }, reject);
+      }
+
+      if (restNum === 0) {
+        resolve([]);
+      }
+    });
+  }
+
+  // 静态方法
+  static race(target) {
+    return new _Promise((resolve, reject) => {
+      for (const item of target) {
+        _Promise.resolve(item).then((res) => {
+          resolve(res);
+        }, reject);
+      }
+    });
+  }
+
+  // 静态方法
+
+  static allSettled(target) {
+    return new _Promise((resolve) => {
+      let restNum = 0;
+      const results = [];
+
+      for (const item of target) {
+        const index = restNum++;
+        _Promise.resolve(item).then(
+          (result) => {
+            results[index] = {
+              status: PROMISE_STATUS.FULFILLED,
+              value: result,
+            };
+            restNum--;
+            if (restNum === 0) {
+              resolve(results);
+            }
+          },
+          (reason) => {
+            results[index] = {
+              status: PROMISE_STATUS.REJECTED,
+              reason,
+            };
+            restNum--;
+            if (restNum === 0) {
+              resolve(results);
+            }
+          }
+        );
+      }
+
+      if (restNum === 0) {
+        resolve([]);
+      }
+    });
+  }
 }
-
-_Promise.deferred = function () {
-  var result = {};
-  result.promise = new _Promise(function (resolve, reject) {
-    result.resolve = resolve;
-    result.reject = reject;
-  });
-
-  return result;
-};
-
-module.exports = _Promise;
