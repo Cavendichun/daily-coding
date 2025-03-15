@@ -223,26 +223,27 @@ class _Promise {
    * 3. 普通值
    */
   static resolve(value) {
-    // 如果是当前类的实例，需要直接返回，mdn文档有提到，需要保证 p2 === p1
     if (value instanceof _Promise) {
       return value;
     }
-    // 如果是一个thenable
-    if (
-      (typeof value === "object" || typeof value === "function") &&
-      value !== null
-    ) {
-      // 如果then是函数的话
-      const then = value.then;
-      if (typeof then === "function") {
-        return new _Promise((resolve, reject) => {
-          then.call(value, resolve, reject);
-        });
+    return new _Promise((resolve, reject) => {
+      if (
+        (typeof value === "object" || typeof value === "function") &&
+        value !== null
+      ) {
+        try {
+          const then = value.then;
+          if (typeof then === "function") {
+            then.call(value, resolve, reject);
+          } else {
+            resolve(value);
+          }
+        } catch (error) {
+          reject(error);
+        }
+      } else {
+        resolve(value);
       }
-    }
-    // 其他情况
-    return new _Promise((resolve) => {
-      resolve(value);
     });
   }
 
