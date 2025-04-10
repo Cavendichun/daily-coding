@@ -210,7 +210,7 @@ class _Promise {
       },
       (reason) => {
         callback();
-        return reason;
+        throw reason;
       }
     );
   }
